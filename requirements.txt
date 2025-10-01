@@ -1,0 +1,6 @@
+transformers>=4.29.0
+torch>=2.0.0
+pandas
+browser-use
+Playwright
+requests>=2.28.0
