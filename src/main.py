@@ -3,7 +3,25 @@ from selectors_makemytrip import SELECTORS
 from AI_utils import generate_passenger_data
 import json, csv, os, time
 
+from scrapybara_ai import get_scrapybara_client
+
+SCRAPYBARA_ENABLED = False  # Set to True if you want to run Playwright in the cloud
+SCRAPYBARA_API_KEY = os.environ.get("SCRAPYBARA_API_KEY")
+if SCRAPYBARA_ENABLED and not SCRAPYBARA_API_KEY:
+    from dotenv import load_dotenv
+    load_dotenv()
+    SCRAPYBARA_API_KEY = os.environ.get("SCRAPYBARA_API_KEY")
+
 def search_and_book_flight():
+    # (Optional) Scrapybara block -- cloud desktop automation
+    if SCRAPYBARA_ENABLED:
+        from scrapybara import Scrapybara
+        client = Scrapybara(api_key=SCRAPYBARA_API_KEY)
+        instance = client.start()
+        print("Scrapybara cloud instance started with id:", instance.instance_id)
+        # You could then tunnel Playwright to use this instance's browser endpoint!
+        # For simplicity, local Playwright is shown below.
+
     passenger = generate_passenger_data(use_ai=True)
     print(f"Generated passenger: {passenger}")
 
@@ -11,7 +29,6 @@ def search_and_book_flight():
         browser = p.chromium.launch(headless=False)
         context = browser.new_context()
         page = context.new_page()
-        
         #headers
         page.set_extra_http_headers({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0 Safari/537.36",
