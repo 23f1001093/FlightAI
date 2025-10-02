@@ -1,6 +1,6 @@
 # ✈️ MakeMyTrip Flight Automation
 
-This project automates the process of searching and optionally booking flights on [MakeMyTrip](https://www.makemytrip.com/) using Playwright (and optionally Scrapybara for cloud execution). The bot mimics human actions to navigate the site, fill search fields, extract flight results, and proceed to the booking flow.
+This project automates the process of searching and optionally booking flights on MakeMyTrip using Playwright (and optionally Scrapybara for cloud execution). The bot mimics human actions to navigate the site, fill search fields, extract flight results, and proceed to the booking flow.
 
 
 
