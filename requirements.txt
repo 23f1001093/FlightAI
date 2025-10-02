@@ -4,3 +4,4 @@ pandas
 browser-use
 Playwright
 requests>=2.28.0
+scrapybara

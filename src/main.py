@@ -8,16 +8,11 @@ def search_and_book_flight():
     print(f"Generated passenger: {passenger}")
 
     with sync_playwright() as p:
-        # Uncomment next three lines for mobile emulation if desktop blocks you
-        # iphone_12 = p.devices['iPhone 12']
-        # browser = p.chromium.launch(headless=False)
-        # context = browser.new_context(**iphone_12)
-        
         browser = p.chromium.launch(headless=False)
         context = browser.new_context()
         page = context.new_page()
         
-        # Randomize desktop headers, start with fresh cookies/localStorage
+        #headers
         page.set_extra_http_headers({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0 Safari/537.36",
             "Accept-Language": "en-US,en;q=0.9"
@@ -26,12 +21,7 @@ def search_and_book_flight():
         page.goto("https://www.makemytrip.com/flights/")
         time.sleep(3)
         
-        try:
-             page.evaluate("window.localStorage.clear()")
-        except Exception as e:
-             print("localStorage clear error (usually safe to ignore):", e)
-
-        # Dismiss overlays
+        # overlays
         for selector in [
             "span.commonModal__close", "span[data-cy='closeModal']",
             ".loginModal button.close", ".modalClose", "span[role='button'].modalClose",
@@ -78,7 +68,7 @@ def search_and_book_flight():
             print("Selected first autosuggest option as fallback")
         time.sleep(2)
 
-        # Date picker: Workaround for sticky overlays
+        # human like clicks
         page.mouse.click(10, 10)
         time.sleep(1)
         page.evaluate("window.scrollBy(0, 400)")
@@ -86,7 +76,7 @@ def search_and_book_flight():
         page.click(SELECTORS["dep_date_input"], force=True)
         time.sleep(2)
 
-        # Select first enabled date
+       
         page.wait_for_selector(".dateInnerCell")
         date_cells = page.query_selector_all('.dateInnerCell')
         date_selected = False
@@ -104,19 +94,19 @@ def search_and_book_flight():
         page.mouse.click(10, 10)
         time.sleep(2)
 
-        # Click Search, wait for results, take screenshot for debugging
+        # Search btn
         page.click(SELECTORS["search_button"])
         print("Clicked Search. Waiting for flight results...")
         try:
             page.wait_for_selector(".splitViewListing, .fli-list, .splitVw__card", timeout=60000)
         except Exception:
-            print("No flight results found. Check selector or try mobile emulation.")
+            print("leads to page 200-OK")
             page.screenshot(path="output/results_debug.png")
             context.close()
             return
         page.screenshot(path="output/results_debug.png")
 
-        # Flight extraction (most common selectors)
+        #Flight list 
         flights = []
         for card in page.query_selector_all(".splitVw__card, .splitViewListing, .fli-list"):
             try:
@@ -125,6 +115,7 @@ def search_and_book_flight():
                 arrive = card.query_selector(SELECTORS["arrive_time"]).inner_text()
                 price = card.query_selector(SELECTORS["flight_price"]).inner_text()
                 flights.append({
+                    "card": card,
                     "flight": name,
                     "depart_time": depart,
                     "arrive_time": arrive,
@@ -146,32 +137,93 @@ def search_and_book_flight():
             for flight in flights:
                 writer.writerow(flight)
         print("Flight data saved to output/flight_results.json and output/flight_results.csv")
+        
+
+
 
         # Book first flight if available
         review = None
         if flights:
-            first_card = page.query_selector_all(".splitVw__card, .splitViewListing, .fli-list")[0]
-            book_btn = first_card.query_selector(SELECTORS["book_now"])
+            first_card = card[0]
+            
+            #view prices btn
+
+            view_prices__btn = first_card.query_selector('button:has(span[data-test="component-buttonText"])')
+            if view_prices__btn:
+                view_prices__btn.click()
+                time.sleep(1)
+
+                #book now btn
+            book_btn = first_card.query_selector('button.buttonPrimary.buttonBig')
             if book_btn:
-                book_btn.click()
-                full_name = passenger["name"].split(" ", 1)
-                first_name = full_name[0]
-                last_name = full_name[1] if len(full_name) > 1 else ""
-                page.fill(SELECTORS["first_name_input"], first_name)
-                page.fill(SELECTORS["last_name_input"], last_name)
-                page.fill(SELECTORS["phone_input"], passenger["phone"])
-                page.fill(SELECTORS["email_input"], passenger["email"])
-                try:
-                    page.wait_for_selector(SELECTORS["review_page"], timeout=7000)
-                    review = page.query_selector(SELECTORS["review_page"]).inner_text()
-                    print("\nBooking Review Details:\n", review)
-                except Exception:
-                    print("Review details not found.")
-                    review = "No review details found"
-        with open("output/booking_review.txt", "w") as f:
+                    book_btn.click()
+                    time.sleep(1)
+
+                    # + passenger btn 
+                    add_adult_btn = page.query_selector('button.addTravellerBtn')
+                    if add_adult_btn:
+                        add_adult_btn.click()
+                        time.sleep(0.5)
+                    #passenger info
+                    full_name = passenger["name"].split(" ", 1)
+                    first_name = full_name[0]
+                    last_name = full_name[1] if len(full_name) > 1 else ""
+                    page.fill('input[placeholder="First & Middle Name"]', first_name)
+                    page.fill('input[placeholder="Last Name"]', last_name)
+                    try:
+                        gender_btn = page.query_selector('label[for^="gender_"]')
+                        if gender_btn:
+                            gender_btn.click()
+                    except Exception:
+                        pass
+                    time.sleep(0.5)
+
+
+                    try:
+                        page.fill('input[placeholder="Mobile No"]', passenger["phone"])
+                    except Exception:
+                        try:
+                            page.fill('input[placeholder="Mobile No(Optional)"]', passenger["phone"])
+                        except Exception:
+                            pass
+                    # Email
+                    try:
+                        page.fill('input[placeholder="Email"]', passenger["email"])
+                    except Exception:
+                        try:
+                            page.fill('input[placeholder="Email(Optional)"]', passenger["email"])
+                        except Exception:
+                            pass
+                    time.sleep(0.7)
+
+                    # continue btn
+                    continue_btn = page.query_selector('button.buttonPrimary.extraPadBtn')
+                    if not continue_btn:
+                        continue_btn = page.query_selector('button:has-text("Continue")')
+                    if continue_btn:
+                        continue_btn.click()
+                        print("Clicked Continue after filling passenger info.")
+                        time.sleep(1)
+                    else:
+                        print("Continue button not found.")
+ 
+                    # review page
+                    try:
+                        page.wait_for_selector(SELECTORS["review_page"], timeout=7000)
+                        review = page.query_selector(SELECTORS["review_page"]).inner_text()
+                        print("\nBooking Review Details:\n", review)
+                    except Exception:
+                        print("Review details not found.")
+                        review = "No review details found"
+
+            else:
+                    print("No Book Now button found after viewing prices.")
+        else:
+               print("No View Prices button found.")
+    with open("output/booking_review.txt", "w") as f:
             f.write(review or "No booking attempted.")
-        print("Booking review saved to output/booking_review.txt")
-        context.close()
+    print("Booking review saved to output/booking_review.txt")
+    context.close()
 
 if __name__ == "__main__":
     search_and_book_flight()

@@ -3,7 +3,7 @@ import string
 from datetime import datetime, timedelta
 
 def random_names():
-    first_names = ['Saanvi', 'Raghav', 'Shraddha', 'Arti', 'Aditi', 'Arys']
+    first_names = ['Saanvi', 'Raghav', 'Shraddha', 'Arti', 'Aditi', 'Arya']
     last_names = ['Shah', 'Patel', 'Kumar', 'Reddy', 'Mehta', 'Gupta']
     return f"{random.choice(first_names)} {random.choice(last_names)}"
 

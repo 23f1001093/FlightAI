@@ -23,16 +23,25 @@ SELECTORS = {
     #view price btn
     "view_prices_btn": 'button:has(span[data-test="component-buttonText"])',
     "book_now": 'button.buttonPrimary.buttonBig',
-
-    # book now btn
-    "book_now": '.splitFooterButton.buttonPrimary',
+    #"book_now_1": '.splitFooterButton.buttonPrimary',
     
     #Passenger form
     "first_name_input": 'input[placeholder="First & Middle Name"]',
     "last_name_input": 'input[placeholder="Last Name"]',
     "phone_input": 'input[placeholder="Mobile No(Optional)"]',
+    "phone_input": 'input[placeholder="Mobile No"]',
     "email_input": 'input[placeholder="Email(Optional)"]',
-    
+    "email_input": 'input[placeholder="Email"]',
+
+    #+ new adult btn
+    "add_adult_btn": 'button.addTravellerBtn',
+
     #review page
-    "review_page": '.reviewDtlsOverlayContent'
+    "review_page": '.reviewDtlsOverlayContent',
+
+    #continue btn
+    "continue_btn": 'button:has-text("Continue")'
+
+
+    
 }
